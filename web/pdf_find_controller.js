@@ -44,6 +44,7 @@ const CHARACTERS_TO_NORMALIZE = {
 };
 
 let normalizationRegex = null;
+//把码转成通用字符串，
 function normalize(text) {
   if (!normalizationRegex) {
     // Compile the regular expression for text normalization once.
@@ -53,7 +54,7 @@ function normalize(text) {
   let diffs = null;
   const normalizedText = text.replace(normalizationRegex, function (ch, index) {
     const normalizedCh = CHARACTERS_TO_NORMALIZE[ch],
-      diff = normalizedCh.length - ch.length;
+      diff = normalizedCh.length - ch.length; //通用字符串和码符的长度差别
     if (diff !== 0) {
       (diffs ||= []).push([index, diff]);
     }
@@ -66,13 +67,14 @@ function normalize(text) {
 // Determine the original, non-normalized, match index such that highlighting of
 // search results is correct in the `textLayer` for strings containing e.g. "½"
 // characters; essentially "inverting" the result of the `normalize` function.
+//确定未用normalize之前的原始位置
 function getOriginalIndex(matchIndex, diffs = null) {
   if (!diffs) {
     return matchIndex;
   }
   let totalDiff = 0;
   for (const [index, diff] of diffs) {
-    const currentIndex = index + totalDiff;
+    const currentIndex = index + totalDiff; //diffs每个元素里的index是匹配文案在原文档里的index
 
     if (currentIndex >= matchIndex) {
       break;
@@ -99,7 +101,7 @@ class PDFFindController {
   /**
    * @param {PDFFindControllerOptions} options
    */
-  constructor({ linkService, eventBus }) {
+  constructor({ linkService, eventBus }) {  //linkService：启用pdf中的超链接
     this._linkService = linkService;
     this._eventBus = eventBus;
 
@@ -270,7 +272,7 @@ class PDFFindController {
   get _query() {
     if (this._state.query !== this._rawQuery) {
       this._rawQuery = this._state.query;
-      [this._normalizedQuery] = normalize(this._state.query);
+      [this._normalizedQuery] = this._state.query;
     }
     return this._normalizedQuery;
   }
@@ -415,40 +417,45 @@ class PDFFindController {
 
   _calculateWordMatch(query, pageIndex, pageContent, pageDiffs, entireWord) {
     const matchesWithLength = [];
-
-    // Divide the query into pieces and search for text in each piece.
-    const queryArray = query.match(/\S+/g);
-    for (let i = 0, len = queryArray.length; i < len; i++) {
-      const subquery = queryArray[i];
-      const subqueryLen = subquery.length;
-
-      let matchIdx = -subqueryLen;
-      while (true) {
-        matchIdx = pageContent.indexOf(subquery, matchIdx + subqueryLen);
-        if (matchIdx === -1) {
-          break;
+    let test_query = query;
+    for (let x = 0; x < test_query.length; x++) {
+      // Divide the query into pieces and search for text in each piece.
+      // 只有在这里才可以给段落设置一个sign,后面我才能进行匹配，滚动到该段落位置
+      let queryArray = test_query[x].match(/\S+/g); // '/S':任何一个非空白字符
+      for (let i = 0, len = queryArray.length; i < len; i++) {
+        const subquery = queryArray[i];
+        const subqueryLen = subquery.length;
+  
+        let matchIdx = -subqueryLen;
+        while (true) {
+          matchIdx = pageContent.indexOf(subquery, matchIdx + subqueryLen);
+          if (matchIdx === -1) {
+            break;
+          }
+          if (
+            entireWord &&
+            !this._isEntireWord(pageContent, matchIdx, subqueryLen)
+          ) {
+            continue;
+          }
+          const originalMatchIdx = getOriginalIndex(matchIdx, pageDiffs),
+            matchEnd = matchIdx + subqueryLen - 1,
+            originalQueryLen =
+              getOriginalIndex(matchEnd, pageDiffs) - originalMatchIdx + 1;
+  
+          // Other searches do not, so we store the length.
+          matchesWithLength.push({
+            match: originalMatchIdx,
+            matchLength: originalQueryLen,
+            skipped: false,
+          });
         }
-        if (
-          entireWord &&
-          !this._isEntireWord(pageContent, matchIdx, subqueryLen)
-        ) {
-          continue;
-        }
-        const originalMatchIdx = getOriginalIndex(matchIdx, pageDiffs),
-          matchEnd = matchIdx + subqueryLen - 1,
-          originalQueryLen =
-            getOriginalIndex(matchEnd, pageDiffs) - originalMatchIdx + 1;
-
-        // Other searches do not, so we store the length.
-        matchesWithLength.push({
-          match: originalMatchIdx,
-          matchLength: originalQueryLen,
-          skipped: false,
-        });
       }
     }
-
     // Prepare arrays for storing the matches.
+    if (!this.pageMatchesLength) {
+      this.pageMatchesLength = []; // 清空这个要存储的数组
+    }
     this._pageMatchesLength[pageIndex] = [];
     this._pageMatches[pageIndex] = [];
 
@@ -463,23 +470,29 @@ class PDFFindController {
 
   _calculateMatch(pageIndex) {
     let pageContent = this._pageContents[pageIndex];
+    console.log('pageContent',pageContent)
+    let query_words = this.state.query;
     const pageDiffs = this._pageDiffs[pageIndex];
-    let query = this._query;
+    // let query = this._query;
     const { caseSensitive, entireWord, phraseSearch } = this._state;
 
-    if (query.length === 0) {
+    if (query_words.length === 0) {
       // Do nothing: the matches should be wiped out already.
       return;
     }
-
-    if (!caseSensitive) {
-      pageContent = pageContent.toLowerCase();
-      query = query.toLowerCase();
+    for (let i = 0; i < query_words.length; i++) {
+      // query_words[i] = normalize(query_words[i]);
+      if (!caseSensitive) { // 判断是否对大小写敏感
+        // 如果不区分大小写，就把页面内容全部转为小写
+        // 这里pagecont
+        pageContent = pageContent.toLowerCase();
+        query_words[i] = query_words[i].toLowerCase();
+      }
     }
 
     if (phraseSearch) {
       this._calculatePhraseMatch(
-        query,
+        query_words,
         pageIndex,
         pageContent,
         pageDiffs,
@@ -487,7 +500,7 @@ class PDFFindController {
       );
     } else {
       this._calculateWordMatch(
-        query,
+        query_words,
         pageIndex,
         pageContent,
         pageDiffs,
@@ -534,6 +547,8 @@ class PDFFindController {
           })
           .then(
             textContent => {
+              console.log('textContent',textContent.items)
+              //每一行文本
               const textItems = textContent.items;
               const strBuf = [];
 
@@ -542,9 +557,8 @@ class PDFFindController {
               }
 
               // Store the normalized page content (text items) as one string.
-              [this._pageContents[i], this._pageDiffs[i]] = normalize(
-                strBuf.join("")
-              );
+              [this._pageContents[i], this._pageDiffs[i]] = normalize(strBuf.join("")) //test
+              // [this._pageContents[i], this._pageDiffs[i]] = strBuf.join("")
               extractTextCapability.resolve(i);
             },
             reason => {

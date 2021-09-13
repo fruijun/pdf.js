@@ -521,6 +521,17 @@ const PDFViewerApplication = {
       useOnlyCssZoom: AppOptions.get("useOnlyCssZoom"),
       maxCanvasPixels: AppOptions.get("maxCanvasPixels"),
     });
+    // eventBus.on("pagesinit", function () {
+    //   console.log('pagesinit')
+    //   // We can use pdfViewer now, e.g. let's change default scale.
+    //   pdfViewer.currentScaleValue = "page-width";
+    
+    //   // We can try searching for things.
+    //   if (PDFJSDev.test("MOZCENTRAL || CHROME")) {
+    //     let SEARCH_FOR = ['12','34']
+    //     findController.executeCommand("find", { query: SEARCH_FOR });
+    //   }
+    // });
     pdfRenderingQueue.setViewer(this.pdfViewer);
     pdfLinkService.setViewer(this.pdfViewer);
     pdfScriptingManager.setViewer(this.pdfViewer);
@@ -542,6 +553,14 @@ const PDFViewerApplication = {
 
     if (!this.supportsIntegratedFind) {
       this.findBar = new PDFFindBar(appConfig.findBar, eventBus, this.l10n);
+      // localStorage.removeItem('keywordForPDF')
+      // localStorage.setItem("keywordForPDF",JSON.stringify(['目标节点','回溯','冒泡阶段','触发']))
+      const keyword = localStorage.getItem("keywordForPDF")
+      // 获取value值
+      const highLightStr = appConfig.findBar.findField.value;
+      const highLightWords = highLightStr.split(",");
+      // let highLightWords = ['相关事务', 'Languages', 'for', 'Compilers', 'world', 'hello','进一步','公务用','管理职责','进行清洁工作'];
+      wordHighLight(JSON.parse(keyword))
     }
 
     this.pdfDocumentProperties = new PDFDocumentProperties(
@@ -615,6 +634,7 @@ const PDFViewerApplication = {
   },
 
   run(config) {
+    console.log('run with config 2:',config)
     this.initialize(config).then(webViewerInitialized);
   },
 
@@ -723,9 +743,9 @@ const PDFViewerApplication = {
         this.open(data);
       },
       onOpenWithURL: (url, length, originalUrl) => {
+        console.log('必须走这里才能传参数')
         const file = originalUrl !== undefined ? { url, originalUrl } : url;
         const args = length !== undefined ? { length } : null;
-
         this.open(file, args);
       },
       onError: err => {
@@ -890,7 +910,9 @@ const PDFViewerApplication = {
     }
     // Set the necessary API parameters, using the available options.
     const apiParameters = AppOptions.getAll(OptionKind.API);
+    console.log('apiParameters',apiParameters)
     for (const key in apiParameters) {
+      console.log('key',key)
       let value = apiParameters[key];
 
       if (key === "docBaseUrl" && !value) {
@@ -904,10 +926,12 @@ const PDFViewerApplication = {
     }
     // Finally, update the API parameters with the arguments (if they exist).
     if (args) {
+      console.log('get args',args)
       for (const key in args) {
         parameters[key] = args[key];
       }
     }
+    console.log('可以在这里设置参数',parameters)
 
     const loadingTask = getDocument(parameters);
     this.pdfLoadingTask = loadingTask;
@@ -2154,6 +2178,7 @@ function webViewerInitialized() {
     const queryString = document.location.search.substring(1);
     const params = parseQueryString(queryString);
     file = params.get("file") ?? AppOptions.get("defaultUrl");
+    console.log('在链接上获取到file:',file)
     validateFileURL(file);
   } else if (PDFJSDev.test("MOZCENTRAL")) {
     file = window.location.href;
@@ -2247,6 +2272,7 @@ function webViewerInitialized() {
   );
 
   try {
+    console.log('找到这个file就能找到file怎么传')
     webViewerOpenFileViaURL(file);
   } catch (reason) {
     PDFViewerApplication.l10n.get("loading_error").then(msg => {
@@ -2257,7 +2283,9 @@ function webViewerInitialized() {
 
 function webViewerOpenFileViaURL(file) {
   if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
+    console.log('fj:',typeof PDFJSDev === "undefined")
     if (file) {
+      console.log('app open 6')
       PDFViewerApplication.open(file);
     }
   } else if (PDFJSDev.test("MOZCENTRAL || CHROME")) {
@@ -2278,7 +2306,26 @@ function webViewerResetPermissions() {
   // Currently only the "copy"-permission is supported.
   appConfig.viewerContainer.classList.remove(ENABLE_PERMISSIONS_CLASS);
 }
-
+function wordHighLight(hightLightWords) { //
+  console.log('wordHighLight',hightLightWords)
+  let evt = {
+    // source: PDFFindBar, // PDFFindBar的实例，不确定是干嘛用的？
+    type: '',  // 这里默认应该是空的
+    // 这里能默认跳转到query的位置，刚好能满足要求
+    query: hightLightWords, // 高亮的关键词
+    phraseSearch: false, // 支持整段文字匹配,如果时多个词的匹配只能是false
+    caseSensitive: false, // 默认为false,搜索时忽略大小写
+    highlightAll: true, // 设为true即关键词全部高亮
+    // findPrevious: true,
+  };
+  PDFViewerApplication.findController.executeCommand('find' + evt.type, {//搜索执行函数
+    query: evt.query,
+    phraseSearch: evt.phraseSearch,
+    caseSensitive: evt.caseSensitive,
+    highlightAll: evt.highlightAll,
+    findPrevious: evt.findPrevious,
+  });
+}
 function webViewerPageRendered({ pageNumber, timestamp, error }) {
   // If the page is still visible when it has finished rendering,
   // ensure that the page number input loading indicator is hidden.

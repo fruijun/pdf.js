@@ -57,9 +57,9 @@
   border-radius: 0;
 }
 
-.textLayer .highlight.selected {
+/* .textLayer .highlight.selected {
   background-color: rgba(0, 100, 0, 1);
-}
+} */
 
 .textLayer ::selection {
   background: rgba(0, 0, 255, 1);

@@ -61,6 +61,13 @@ if (typeof PDFJSDev !== "undefined" && PDFJSDev.test("CHROME || GENERIC")) {
 }
 
 function getViewerConfiguration() {
+  // //这里是刚才添加的代码
+  // const queryString = document.location.search.slice(1);
+  // console.log('queryString',queryString)
+  // const m = /(^|&)keyword=([^&]*)/.exec(queryString);
+  // console.log('m',m)
+
+  // const keyword = m ? decodeURIComponent(m[2]) : "";
   let errorWrapper = null;
   if (typeof PDFJSDev === "undefined" || !PDFJSDev.test("MOZCENTRAL")) {
     errorWrapper = {
@@ -72,6 +79,7 @@ function getViewerConfiguration() {
       lessInfoButton: document.getElementById("errorShowLess"),
     };
   }
+  document.getElementById("findbar").style.display = "none";
 
   return {
     appContainer: document.body,
@@ -199,6 +207,7 @@ function getViewerConfiguration() {
 function webViewerLoad() {
   const config = getViewerConfiguration();
   if (typeof PDFJSDev === "undefined" || !PDFJSDev.test("PRODUCTION")) {
+  console.log('走这里')
     Promise.all([
       import("pdfjs-web/genericcom.js"),
       import("pdfjs-web/pdf_print_service.js"),
