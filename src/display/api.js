@@ -371,7 +371,6 @@ function getDocument(src) {
   if (typeof params.disableAutoFetch !== "boolean") {
     params.disableAutoFetch = false;
   }
-  console.log('==params==',params)
 
   // Set the main-thread verbosity level.
   setVerbosityLevel(params.verbosity);
@@ -507,7 +506,6 @@ async function _fetchDocument(worker, source, pdfDataRangeTransport, docId) {
       enableXfa: source.enableXfa,
       useSystemFonts: source.useSystemFonts,
       cMapUrl: source.useWorkerFetch ? source.cMapUrl : null,
-      queryMap: source.queryMap ? source.queryMap : null,
       standardFontDataUrl: source.useWorkerFetch
         ? source.standardFontDataUrl
         : null,

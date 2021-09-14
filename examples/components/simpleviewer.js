@@ -87,6 +87,7 @@ const loadingTask = pdfjsLib.getDocument({
   url: DEFAULT_URL,
   cMapUrl: CMAP_URL,
   cMapPacked: CMAP_PACKED,
+  query:'0999'
 });
 loadingTask.promise.then(function (pdfDocument) {
   // Document loaded, specifying document for the viewer and

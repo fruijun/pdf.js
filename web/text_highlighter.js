@@ -142,7 +142,6 @@ class TextHighlighter {
       };
       result.push(match);
     }
-    // console.log('result:',result)
     return result;
   }
 
@@ -185,8 +184,7 @@ class TextHighlighter {
       const node = document.createTextNode(content);
       if (className) {
         const span = document.createElement("span");
-        // span.className = `${className} appended`;// appended会导致高亮部分一部分高度比较高
-        span.className = `${className}`;
+        span.className = `${className} appended`;
         span.appendChild(node);
         div.appendChild(span);
         return className.includes("selected") ? span.offsetLeft : 0;
@@ -200,7 +198,6 @@ class TextHighlighter {
     if (highlightAll) {
       i0 = 0;
       i1 = matches.length;
-      console.log('matches',matches)
     } else if (!isSelectedPage) {
       // Not highlighting all and this isn't the selected page, so do nothing.
       return;

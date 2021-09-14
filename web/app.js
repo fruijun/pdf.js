@@ -142,7 +142,7 @@ const KNOWN_GENERATORS = [
   "aspose.cells",
   "fpdf",
 ];
-let queryMap = [];
+
 class DefaultExternalServices {
   constructor() {
     throw new Error("Cannot initialize DefaultExternalServices.");
@@ -553,18 +553,14 @@ const PDFViewerApplication = {
 
     if (!this.supportsIntegratedFind) {
       this.findBar = new PDFFindBar(appConfig.findBar, eventBus, this.l10n);
-      // // localStorage.removeItem('keywordForPDF')
-      // // localStorage.setItem("keywordForPDF",JSON.stringify(['目标节点','回溯','冒泡阶段','触发','dom 节点进行交互']))
-      // const keyword = localStorage.getItem("keywordForPDF")
-      // // let highLightWords = ['相关事务', 'Languages', 'for', 'Compilers', 'world', 'hello','进一步','公务用','管理职责','进行清洁工作'];
-      // wordHighLight(JSON.parse(keyword))
-      //2
-      // wordHighLight(queryMap)
-      //3
-      //获取value值
+      // localStorage.removeItem('keywordForPDF')
+      // localStorage.setItem("keywordForPDF",JSON.stringify(['目标节点','回溯','冒泡阶段','触发']))
+      const keyword = localStorage.getItem("keywordForPDF")
+      // 获取value值
       const highLightStr = appConfig.findBar.findField.value;
       const highLightWords = highLightStr.split(",");
-      wordHighLight(highLightWords)
+      // let highLightWords = ['相关事务', 'Languages', 'for', 'Compilers', 'world', 'hello','进一步','公务用','管理职责','进行清洁工作'];
+      wordHighLight(JSON.parse(keyword))
     }
 
     this.pdfDocumentProperties = new PDFDocumentProperties(
@@ -934,11 +930,8 @@ const PDFViewerApplication = {
       for (const key in args) {
         parameters[key] = args[key];
       }
-      if(args['queryMap']) {
-        queryMap = args['queryMap']
-      }
     }
-    console.log('在使用的地方设置参数，在这里拿到参数',parameters)
+    console.log('可以在这里设置参数',parameters)
 
     const loadingTask = getDocument(parameters);
     this.pdfLoadingTask = loadingTask;
