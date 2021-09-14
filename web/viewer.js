@@ -79,7 +79,7 @@ function getViewerConfiguration() {
       lessInfoButton: document.getElementById("errorShowLess"),
     };
   }
-  document.getElementById("findbar").style.display = "none";
+  // document.getElementById("findbar").style.display = "none";
 
   return {
     appContainer: document.body,

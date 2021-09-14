@@ -101,10 +101,10 @@ class PDFFindController {
   /**
    * @param {PDFFindControllerOptions} options
    */
-  constructor({ linkService, eventBus }) {  //linkService：启用pdf中的超链接
+  constructor({ linkService, eventBus, queryMap }) {  //linkService：启用pdf中的超链接
     this._linkService = linkService;
     this._eventBus = eventBus;
-
+    this._queryMap = queryMap;
     this._reset();
     eventBus._on("findbarclose", this._onFindBarClose.bind(this));
   }
@@ -469,6 +469,7 @@ class PDFFindController {
   }
 
   _calculateMatch(pageIndex) {
+    //pageContent：每一页的内容
     let pageContent = this._pageContents[pageIndex];
     console.log('pageContent',pageContent)
     let query_words = this.state.query;
@@ -547,8 +548,7 @@ class PDFFindController {
           })
           .then(
             textContent => {
-              console.log('textContent',textContent.items)
-              //每一行文本
+              //textItems:每一行文本
               const textItems = textContent.items;
               const strBuf = [];
 
