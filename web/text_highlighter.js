@@ -93,7 +93,7 @@ class TextHighlighter {
     }
   }
 
-  _convertMatches(matches, matchesLength) {
+  _convertMatches(matches, matchesLength,matchesWithLength) {
     // Early exit if there is nothing to convert.
     if (!matches) {
       return [];
@@ -105,7 +105,7 @@ class TextHighlighter {
     const end = textContentItemsStr.length - 1;
     const result = [];
 
-    for (let m = 0, mm = matches.length; m < mm; m++) {
+    for (let m = 0, mm = matches.length; m < mm; m++) { 
       // Calculate the start position.
       let matchIdx = matches[m];
 
@@ -118,12 +118,15 @@ class TextHighlighter {
       if (i === textContentItemsStr.length) {
         console.error("Could not find a matching mapping");
       }
-
+      let item = matchesWithLength.find(d => d.match === matchIdx)
       const match = {
         begin: {
           divIdx: i,
           offset: matchIdx - iIndex,
+          color:item.color
         },
+        xId:item.x,
+        text:item.text
       };
 
       // Calculate the end position.
@@ -139,6 +142,7 @@ class TextHighlighter {
       match.end = {
         divIdx: i,
         offset: matchIdx - iIndex,
+        color:item.color
       };
       result.push(match);
     }
@@ -146,13 +150,14 @@ class TextHighlighter {
   }
 
   _renderMatches(matches) {
+    console.log('_renderMatches matches',matches)
     // Early exit if there is nothing to render.
     if (matches.length === 0) {
       return;
     }
     const { findController, pageIdx } = this;
     const { textContentItemsStr, textDivs } = this;
-
+    console.log('matches',matches)
     const isSelectedPage = pageIdx === findController.selected.pageIdx;
     const selectedMatchIdx = findController.selected.matchIdx;
     const highlightAll = findController.state.highlightAll;
@@ -162,13 +167,14 @@ class TextHighlighter {
       offset: undefined,
     };
 
-    function beginText(begin, className) {
+    function beginText(begin, className,color) {
       const divIdx = begin.divIdx;
       textDivs[divIdx].textContent = "";
-      return appendTextToDiv(divIdx, 0, begin.offset, className);
+      return appendTextToDiv(divIdx, 0, begin.offset, className,color);
     }
 
-    function appendTextToDiv(divIdx, fromOffset, toOffset, className) {
+    function appendTextToDiv(divIdx, fromOffset, toOffset, className,color) {
+      console.log('appendTextToDiv color',color)
       let div = textDivs[divIdx];
       if (div.nodeType === Node.TEXT_NODE) {
         const span = document.createElement("span");
@@ -184,8 +190,12 @@ class TextHighlighter {
       const node = document.createTextNode(content);
       if (className) {
         const span = document.createElement("span");
-        span.className = `${className} appended`;
+        // span.className = `${className} appended`;
+        span.className = `${className}`;
+        console.log('color',color)
+        span.style.backgroundColor = color
         span.appendChild(node);
+        console.log('span',span)
         div.appendChild(span);
         return className.includes("selected") ? span.offsetLeft : 0;
       }
@@ -206,6 +216,9 @@ class TextHighlighter {
     for (let i = i0; i < i1; i++) {
       const match = matches[i];
       const begin = match.begin;
+      const xId = match.xId;
+      const color = match.begin.color;
+      console.log('bcolor',color)
       const end = match.end;
       const isSelected = isSelectedPage && i === selectedMatchIdx;
       const highlightSuffix = isSelected ? " selected" : "";
@@ -215,12 +228,12 @@ class TextHighlighter {
       if (!prevEnd || begin.divIdx !== prevEnd.divIdx) {
         // If there was a previous div, then add the text at the end.
         if (prevEnd !== null) {
-          appendTextToDiv(prevEnd.divIdx, prevEnd.offset, infinity.offset);
+          appendTextToDiv(prevEnd.divIdx, prevEnd.offset, infinity.offset,'',color);
         }
         // Clear the divs and set the content until the starting point.
-        beginText(begin);
+        beginText(begin,'',color);
       } else {
-        appendTextToDiv(prevEnd.divIdx, prevEnd.offset, begin.offset);
+        appendTextToDiv(prevEnd.divIdx, prevEnd.offset, begin.offset,'',color);
       }
 
       if (begin.divIdx === end.divIdx) {
@@ -228,19 +241,22 @@ class TextHighlighter {
           begin.divIdx,
           begin.offset,
           end.offset,
-          "highlight" + highlightSuffix
+          "highlight" + highlightSuffix,
+          color
         );
       } else {
         selectedLeft = appendTextToDiv(
           begin.divIdx,
           begin.offset,
           infinity.offset,
-          "highlight begin" + highlightSuffix
+          "highlight begin" + highlightSuffix,
+          color
         );
         for (let n0 = begin.divIdx + 1, n1 = end.divIdx; n0 < n1; n0++) {
           textDivs[n0].className = "highlight middle" + highlightSuffix;
+          textDivs[n0].style.backgroundColor = color
         }
-        beginText(end, "highlight end" + highlightSuffix);
+        beginText(end, "highlight end" + highlightSuffix,color);
       }
       prevEnd = end;
 
@@ -256,7 +272,8 @@ class TextHighlighter {
     }
 
     if (prevEnd) {
-      appendTextToDiv(prevEnd.divIdx, prevEnd.offset, infinity.offset);
+      console.log('prevEnd',prevEnd)
+      appendTextToDiv(prevEnd.divIdx, prevEnd.offset, infinity.offset,'',prevEnd.color);
     }
   }
 
@@ -267,6 +284,7 @@ class TextHighlighter {
     const { findController, matches, pageIdx } = this;
     const { textContentItemsStr, textDivs } = this;
     let clearedUntilDivIdx = -1;
+    console.log('=matches',matches)
 
     // Clear all current matches.
     for (let i = 0, ii = matches.length; i < ii; i++) {
@@ -287,8 +305,30 @@ class TextHighlighter {
     // used for the textLayer.
     const pageMatches = findController.pageMatches[pageIdx] || null;
     const pageMatchesLength = findController.pageMatchesLength[pageIdx] || null;
+    const matchesWithLength = findController.matchesWithLength[pageIdx] //matches长度和位置跟matchesWithLength都对应，mm的位置可以对应到matchesWithLength上面
+    // console.log('textContentItemsStr',textContentItemsStr)
+    function deepCopy(obj) {
+      // 只拷贝对象
+      if (typeof obj !== 'object') return
+      // 根据obj的类型判断是新建一个数组还是一个对象
+      var newObj = obj instanceof Array ? [] : {}
+      for (var key in obj) {
+        // 遍历obj,并且判断是obj的属性才拷贝
+        if (obj.hasOwnProperty(key)) {
+          // 判断属性值的类型，如果是对象递归调用深拷贝
+          newObj[key] = typeof obj[key] === 'object' ? deepCopy(obj[key]) : obj[key]
+        }
+      }
+      return newObj
+    }
+    // console.log('text get matchesWithLength',deepCopy(matchesWithLength))
+    // console.log('pageMatches',pageMatches,pageMatchesLength)
+    //[15, 38, 57, 93, 104, 191, 199, 204, 223, 359]
+    //[2, 2, 4, 3, 4, 4, 4, 2, 2, 3] =>pageMatchesLength：匹配的中文字符长度
 
-    this.matches = this._convertMatches(pageMatches, pageMatchesLength);
+    this.matches = this._convertMatches(pageMatches, pageMatchesLength,matchesWithLength);
+    console.log('coomatches',this.matches)
+    //[{begin:{divIdx: 18,offset: 0},end:{divIdx: 19,offset: 1}]
     this._renderMatches(this.matches);
   }
 }

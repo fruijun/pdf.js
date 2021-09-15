@@ -560,7 +560,13 @@ const PDFViewerApplication = {
       const highLightStr = appConfig.findBar.findField.value;
       const highLightWords = highLightStr.split(",");
       // let highLightWords = ['相关事务', 'Languages', 'for', 'Compilers', 'world', 'hello','进一步','公务用','管理职责','进行清洁工作'];
-      wordHighLight(JSON.parse(keyword))
+      
+      let colorMap = []
+      for(let i =0;i<keyword.length;i++){
+        let color = getRandomColor()
+        colorMap.push(color)
+      }
+      wordHighLight(JSON.parse(keyword),colorMap)
     }
 
     this.pdfDocumentProperties = new PDFDocumentProperties(
@@ -2306,8 +2312,7 @@ function webViewerResetPermissions() {
   // Currently only the "copy"-permission is supported.
   appConfig.viewerContainer.classList.remove(ENABLE_PERMISSIONS_CLASS);
 }
-function wordHighLight(hightLightWords) { //
-  console.log('wordHighLight',hightLightWords)
+function wordHighLight(hightLightWords,colorMap) {
   let evt = {
     // source: PDFFindBar, // PDFFindBar的实例，不确定是干嘛用的？
     type: '',  // 这里默认应该是空的
@@ -2317,6 +2322,7 @@ function wordHighLight(hightLightWords) { //
     caseSensitive: false, // 默认为false,搜索时忽略大小写
     highlightAll: true, // 设为true即关键词全部高亮
     // findPrevious: true,
+    colorMap
   };
   PDFViewerApplication.findController.executeCommand('find' + evt.type, {//搜索执行函数
     query: evt.query,
@@ -2324,7 +2330,25 @@ function wordHighLight(hightLightWords) { //
     caseSensitive: evt.caseSensitive,
     highlightAll: evt.highlightAll,
     findPrevious: evt.findPrevious,
+    colorMap: evt.colorMap,
   });
+}
+//生成颜色数组
+function getRandomColor(alpha){
+    //判断有没有传入透明值，没有传入的话，随机生成0-1之间的小数
+    //Math.random()只能生成0-1之间的小数，不包含0跟1，Math.random()*10，是1-10之间的整数，除以10再四舍五入，就有可能得到0或者1.
+    // alpha = alpha==undefined? (Math.random()*10/10).toFixed(1) : alpha;
+    // //将参数转化成数值
+    // alpha=Number(alpha);
+    // //如果传入的参数是非数值，则让透明度为1
+    // if(isNaN(alpha)) alpha=1;
+    //颜色拼接
+    var color = "rgba(";
+    for(var i=0;i<3;i++){
+        color+=parseInt(Math.random()*256)+",";
+    }
+    color+= 0.85+")";
+    return color;
 }
 function webViewerPageRendered({ pageNumber, timestamp, error }) {
   // If the page is still visible when it has finished rendering,

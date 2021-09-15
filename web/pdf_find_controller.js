@@ -16,7 +16,20 @@
 import { createPromiseCapability } from "pdfjs-lib";
 import { getCharacterType } from "./pdf_find_utils.js";
 import { scrollIntoView } from "./ui_utils.js";
-
+function deepCopy(obj) {
+  // 只拷贝对象
+  if (typeof obj !== 'object') return
+  // 根据obj的类型判断是新建一个数组还是一个对象
+  var newObj = obj instanceof Array ? [] : {}
+  for (var key in obj) {
+    // 遍历obj,并且判断是obj的属性才拷贝
+    if (obj.hasOwnProperty(key)) {
+      // 判断属性值的类型，如果是对象递归调用深拷贝
+      newObj[key] = typeof obj[key] === 'object' ? deepCopy(obj[key]) : obj[key]
+    }
+  }
+  return newObj
+}
 const FindState = {
   FOUND: 0,
   NOT_FOUND: 1,
@@ -42,7 +55,6 @@ const CHARACTERS_TO_NORMALIZE = {
   "\u00BD": "1/2", // Vulgar fraction one half
   "\u00BE": "3/4", // Vulgar fraction three quarters
 };
-
 let normalizationRegex = null;
 //把码转成通用字符串，
 function normalize(text) {
@@ -111,6 +123,9 @@ class PDFFindController {
 
   get highlightMatches() {
     return this._highlightMatches;
+  }
+  get matchesWithLength() {
+    return this._matchesWithLength;
   }
 
   get pageMatches() {
@@ -240,6 +255,7 @@ class PDFFindController {
     this._pdfDocument = null;
     this._pageMatches = [];
     this._pageMatchesLength = [];
+    this._matchesWithLength = [];
     this._state = null;
     // Currently selected match.
     this._selected = {
@@ -415,10 +431,12 @@ class PDFFindController {
     this._pageMatchesLength[pageIndex] = matchesLength;
   }
 
-  _calculateWordMatch(query, pageIndex, pageContent, pageDiffs, entireWord) {
+  _calculateWordMatch(query, pageIndex, pageContent, pageDiffs, entireWord,colorMap) {
     const matchesWithLength = [];
     let test_query = query;
     for (let x = 0; x < test_query.length; x++) {
+      //根据x随机生成颜色
+      const color = colorMap[x]
       // Divide the query into pieces and search for text in each piece.
       // 只有在这里才可以给段落设置一个sign,后面我才能进行匹配，滚动到该段落位置
       let queryArray = test_query[x].match(/\S+/g); // '/S':任何一个非空白字符
@@ -442,15 +460,19 @@ class PDFFindController {
             matchEnd = matchIdx + subqueryLen - 1,
             originalQueryLen =
               getOriginalIndex(matchEnd, pageDiffs) - originalMatchIdx + 1;
-  
           // Other searches do not, so we store the length.
           matchesWithLength.push({
             match: originalMatchIdx,
             matchLength: originalQueryLen,
+            x:x,//匹配当中的第几个
+            color:color,
+            text:test_query[x],
             skipped: false,
           });
         }
       }
+      this._matchesWithLength[pageIndex] = matchesWithLength;
+      console.log('finder set _matchesWithLength',deepCopy(this._matchesWithLength[pageIndex]))
     }
     // Prepare arrays for storing the matches.
     if (!this.pageMatchesLength) {
@@ -470,11 +492,11 @@ class PDFFindController {
 
   _calculateMatch(pageIndex) {
     let pageContent = this._pageContents[pageIndex];
-    console.log('pageContent',pageContent)
+    // console.log('pageContent',pageContent)
     let query_words = this.state.query;
     const pageDiffs = this._pageDiffs[pageIndex];
     // let query = this._query;
-    const { caseSensitive, entireWord, phraseSearch } = this._state;
+    const { caseSensitive, entireWord, phraseSearch,colorMap } = this._state;
 
     if (query_words.length === 0) {
       // Do nothing: the matches should be wiped out already.
@@ -504,7 +526,8 @@ class PDFFindController {
         pageIndex,
         pageContent,
         pageDiffs,
-        entireWord
+        entireWord,
+        colorMap
       );
     }
 
@@ -547,7 +570,7 @@ class PDFFindController {
           })
           .then(
             textContent => {
-              console.log('textContent',textContent.items)
+              // console.log('textContent',textContent.items)
               //每一行文本
               const textItems = textContent.items;
               const strBuf = [];
