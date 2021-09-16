@@ -555,20 +555,20 @@ const PDFViewerApplication = {
       this.findBar = new PDFFindBar(appConfig.findBar, eventBus, this.l10n);
       // localStorage.removeItem('keywordForPDF')
       // localStorage.setItem("keywordForPDF",JSON.stringify(['目标节点','回溯','冒泡阶段','触发']))
-      const keyword = localStorage.getItem("keywordForPDF")
+      const keyword = JSON.parse(localStorage.getItem("keywordForPDF"))
       // 获取value值
       const highLightStr = appConfig.findBar.findField.value;
       const highLightWords = highLightStr.split(",");
       // let highLightWords = ['相关事务', 'Languages', 'for', 'Compilers', 'world', 'hello','进一步','公务用','管理职责','进行清洁工作'];
       
       let colorMap = []
+      let len = keyword.length
+      let cols = new Colors(len).rgbArray()
       for(let i =0;i<keyword.length;i++){
-        let color = getRandomColor()
-        colorMap.push(color)
+        colorMap.push(cols[i].rgb)
       }
-      wordHighLight(JSON.parse(keyword),colorMap)
+      wordHighLight(keyword,colorMap)
     }
-
     this.pdfDocumentProperties = new PDFDocumentProperties(
       appConfig.documentProperties,
       this.overlayManager,
@@ -640,7 +640,6 @@ const PDFViewerApplication = {
   },
 
   run(config) {
-    console.log('run with config 2:',config)
     this.initialize(config).then(webViewerInitialized);
   },
 
@@ -749,7 +748,7 @@ const PDFViewerApplication = {
         this.open(data);
       },
       onOpenWithURL: (url, length, originalUrl) => {
-        console.log('必须走这里才能传参数')
+        // console.log('必须走这里才能传参数')
         const file = originalUrl !== undefined ? { url, originalUrl } : url;
         const args = length !== undefined ? { length } : null;
         this.open(file, args);
@@ -916,9 +915,9 @@ const PDFViewerApplication = {
     }
     // Set the necessary API parameters, using the available options.
     const apiParameters = AppOptions.getAll(OptionKind.API);
-    console.log('apiParameters',apiParameters)
+    // console.log('apiParameters',apiParameters)
     for (const key in apiParameters) {
-      console.log('key',key)
+      // console.log('key',key)
       let value = apiParameters[key];
 
       if (key === "docBaseUrl" && !value) {
@@ -932,12 +931,11 @@ const PDFViewerApplication = {
     }
     // Finally, update the API parameters with the arguments (if they exist).
     if (args) {
-      console.log('get args',args)
       for (const key in args) {
         parameters[key] = args[key];
       }
     }
-    console.log('可以在这里设置参数',parameters)
+    // console.log('可以在这里设置参数',parameters)
 
     const loadingTask = getDocument(parameters);
     this.pdfLoadingTask = loadingTask;
@@ -2184,7 +2182,7 @@ function webViewerInitialized() {
     const queryString = document.location.search.substring(1);
     const params = parseQueryString(queryString);
     file = params.get("file") ?? AppOptions.get("defaultUrl");
-    console.log('在链接上获取到file:',file)
+    // console.log('在链接上获取到file:',file)
     validateFileURL(file);
   } else if (PDFJSDev.test("MOZCENTRAL")) {
     file = window.location.href;
@@ -2278,7 +2276,7 @@ function webViewerInitialized() {
   );
 
   try {
-    console.log('找到这个file就能找到file怎么传')
+    // console.log('找到这个file就能找到file怎么传')
     webViewerOpenFileViaURL(file);
   } catch (reason) {
     PDFViewerApplication.l10n.get("loading_error").then(msg => {
@@ -2289,9 +2287,8 @@ function webViewerInitialized() {
 
 function webViewerOpenFileViaURL(file) {
   if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
-    console.log('fj:',typeof PDFJSDev === "undefined")
     if (file) {
-      console.log('app open 6')
+      // console.log('app open 6')
       PDFViewerApplication.open(file);
     }
   } else if (PDFJSDev.test("MOZCENTRAL || CHROME")) {
@@ -2333,23 +2330,114 @@ function wordHighLight(hightLightWords,colorMap) {
     colorMap: evt.colorMap,
   });
 }
-//生成颜色数组
-function getRandomColor(alpha){
-    //判断有没有传入透明值，没有传入的话，随机生成0-1之间的小数
-    //Math.random()只能生成0-1之间的小数，不包含0跟1，Math.random()*10，是1-10之间的整数，除以10再四舍五入，就有可能得到0或者1.
-    // alpha = alpha==undefined? (Math.random()*10/10).toFixed(1) : alpha;
-    // //将参数转化成数值
-    // alpha=Number(alpha);
-    // //如果传入的参数是非数值，则让透明度为1
-    // if(isNaN(alpha)) alpha=1;
-    //颜色拼接
-    var color = "rgba(";
-    for(var i=0;i<3;i++){
-        color+=parseInt(Math.random()*256)+",";
+var Colors = function(hslLength){
+  this.hslLength = hslLength?hslLength:1;
+  this.cArray = [ "0","1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"];
+  this.hslArray = [];
+};
+//颜色数组函数
+Colors.prototype.rgbArray = function() {
+  var self = this;
+  this.hslArray = this.getHslArray();
+  if(!self.hslArray.length) return [];
+
+  var rgbArray = self.hslArray.map(function(item) {
+    return self.hslToRgb.apply(this, item);
+  });
+
+  return rgbArray.map(function(item) {
+    return {
+      //三原色值
+      value: item,
+      //16进制的颜色
+      hex: self.rgbToHexadecimal(item),
+      //rgb颜色
+      rgb: 'rgb(' + item.toString() + ')',
+      style: {
+        background: 'rgb(' + item.toString() + ')'
+      }
     }
-    color+= 0.85+")";
-    return color;
-}
+  });
+};
+
+/**
+ * RGB颜色转为16进制
+ * 比如 rgb(255,180,0)转 #FFB400
+ * @param {Object} item rgb颜色数组
+ */
+Colors.prototype.rgbToHexadecimal = function(item) {
+        if(item && item.length == 3){
+          var a = item[0], b = item[1], c = item[2], d="#", cArray = this.cArray;
+          d += cArray[Math.floor(a/16)] + "" + cArray[a%16] + "";
+          d += cArray[Math.floor(b/16)] + "" + cArray[b%16] + "";
+          d += cArray[Math.floor(c/16)] + "" + cArray[c%16] + "";
+          return d;
+        }
+};
+/**
+ * HSL颜色值转换为RGB
+ * H，S，L 设定在 [0, 1] 之间
+ * R，G，B 返回在 [0, 255] 之间
+ *
+ * @param H 色相
+ * @param S 饱和度
+ * @param L 亮度
+ * @returns Array RGB色值
+ */
+Colors.prototype.hslToRgb = function(H, S, L) {
+  var R, G, B;
+  if(+S === 0) {
+    R = G = B = L; // 饱和度为0 为灰色
+  } else {
+    var hue2Rgb = function(p, q, t) {
+      if(t < 0) t += 1;
+      if(t > 1) t -= 1;
+      if(t < 1 / 6) return p + (q - p) * 6 * t;
+      if(t < 1 / 2) return q;
+      if(t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    var Q = L < 0.5 ? L * (1 + S) : L + S - L * S;
+    var P = 2 * L - Q;
+    R = hue2Rgb(P, Q, H + 1 / 3);
+    G = hue2Rgb(P, Q, H);
+    B = hue2Rgb(P, Q, H - 1 / 3);
+  }
+  return [Math.round(R * 255), Math.round(G * 255), Math.round(B * 255)];
+};
+
+// 获取随机HSL
+Colors.prototype.randomHsl = function() {
+  var H = Math.random();
+  var S = Math.random();
+  var L = Math.random();
+  return [H, S, L];
+},
+
+// 获取HSL数组
+Colors.prototype.getHslArray= function() {
+  var HSL = [];
+  var hslLength = this.hslLength ? this.hslLength : 1;
+  for(var i = 0; i < hslLength; i++) {
+    var ret = this.randomHsl();
+
+    // 颜色相邻颜色差异须大于 0.25
+    if(i > 0 && Math.abs(ret[0] - HSL[i - 1][0]) < 0.25) {
+      i--;
+      continue; // 重新获取随机色
+    }
+    ret[1] = 0.7 + (ret[1] * 0.2); // [0.7 - 0.9] 排除过灰颜色
+    ret[2] = 0.4 + (ret[2] * 0.4); // [0.4 - 0.8] 排除过亮过暗色
+
+    // 数据转化到小数点后两位
+    ret = ret.map(function(item) {
+      return parseFloat(item.toFixed(2));
+    });
+
+    HSL.push(ret);
+  }
+  return HSL;
+};
 function webViewerPageRendered({ pageNumber, timestamp, error }) {
   // If the page is still visible when it has finished rendering,
   // ensure that the page number input loading indicator is hidden.
