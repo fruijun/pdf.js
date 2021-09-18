@@ -67,6 +67,7 @@ class TextHighlighter {
     this.enabled = true;
     if (!this._onUpdateTextLayerMatches) {
       this._onUpdateTextLayerMatches = evt => {
+        console.log('evt',evt)
         if (evt.pageIndex === this.pageIdx || evt.pageIndex === -1) {
           this._updateMatches();
         }
@@ -307,27 +308,12 @@ class TextHighlighter {
     const pageMatchesLength = findController.pageMatchesLength[pageIdx] || null;
     const matchesWithLength = findController.matchesWithLength[pageIdx] //matches长度和位置跟matchesWithLength都对应，mm的位置可以对应到matchesWithLength上面
     // console.log('textContentItemsStr',textContentItemsStr)
-    function deepCopy(obj) {
-      // 只拷贝对象
-      if (typeof obj !== 'object') return
-      // 根据obj的类型判断是新建一个数组还是一个对象
-      var newObj = obj instanceof Array ? [] : {}
-      for (var key in obj) {
-        // 遍历obj,并且判断是obj的属性才拷贝
-        if (obj.hasOwnProperty(key)) {
-          // 判断属性值的类型，如果是对象递归调用深拷贝
-          newObj[key] = typeof obj[key] === 'object' ? deepCopy(obj[key]) : obj[key]
-        }
-      }
-      return newObj
-    }
     // console.log('text get matchesWithLength',deepCopy(matchesWithLength))
     // console.log('pageMatches',pageMatches,pageMatchesLength)
     //[15, 38, 57, 93, 104, 191, 199, 204, 223, 359]
     //[2, 2, 4, 3, 4, 4, 4, 2, 2, 3] =>pageMatchesLength：匹配的中文字符长度
 
     this.matches = this._convertMatches(pageMatches, pageMatchesLength,matchesWithLength);
-    console.log('coomatches',this.matches)
     //[{begin:{divIdx: 18,offset: 0},end:{divIdx: 19,offset: 1}]
     this._renderMatches(this.matches);
   }

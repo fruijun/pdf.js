@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>'Hello, world!' base64 example</title>
+    <style type="text/css">
+        #the-canvas {
+            border:1px solid black;
+        }
+    </style>
+</head>
+<body>
+<!-- 自己的路径 -->
+<script src="../build/generic-legacy/build/pdf.js"></script>
+<h1>PDF.js 'Hello, base64!' example</h1>
+<canvas id="the-canvas" width="200" height="300"></canvas>
+</body>
+<script type="text/javascript">
+    //直接使用官网例子中的文档吧
+    //atob(  后台返回的把文档进行base64编码之后的String  )
+    var pdfData = atob(
+    'JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwog' +
+    'IC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXMKICAv' +
+    'TWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0K' +
+    'Pj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAg' +
+    'L1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSIAogICAgPj4KICA+' +
+    'PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9u' +
+    'dAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2Jq' +
+    'Cgo1IDAgb2JqICAlIHBhZ2UgY29udGVudAo8PAogIC9MZW5ndGggNDQKPj4Kc3RyZWFtCkJU' +
+    'CjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVu' +
+    'ZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4g' +
+    'CjAwMDAwMDAwNzkgMDAwMDAgbiAKMDAwMDAwMDE3MyAwMDAwMCBuIAowMDAwMDAwMzAxIDAw' +
+    'MDAwIG4gCjAwMDAwMDAzODAgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9v' +
+    'dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G');
+    var CMAP_URL = '../build/generic-legacy/web/cmaps/';//自己的pdfjs字库的路径
+    pdfjsLib.GlobalWorkerOptions.workerSrc ='../build/generic-legacy/build/pdf.worker.js';//自己的路径
+    var loadingTask = pdfjsLib.getDocument({
+        data: pdfData,
+        cMapUrl: CMAP_URL,
+        cMapPacked: true,
+        qMap:['H','o']
+    }); 
+    loadingTask.promise.then(function(pdf) {
+        console.log('pdf',pdf)
+        pdf.getPage(1).then(function(page) {
+            console.log('page',page)
+            var scale = 1.5;
+            var viewport = page.getViewport({ scale: scale, });
+            console.log('viewport',viewport)
+            var canvas = document.getElementById('the-canvas');
+            var context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            var renderContext = {
+                canvasContext: context,
+                viewport: viewport,
+            };
+            page.render(renderContext);
+        });
+    });
+</script>
+</html>

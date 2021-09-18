@@ -439,7 +439,7 @@ class PDFFindController {
       const color = colorMap[x]
       // Divide the query into pieces and search for text in each piece.
       // 只有在这里才可以给段落设置一个sign,后面我才能进行匹配，滚动到该段落位置
-      let queryArray = test_query[x].match(/\S+/g); // '/S':任何一个非空白字符
+      let queryArray = test_query[x].match(/\S+/g); // '/S':任何一个非空白字符 如果字段中包含空格，将会被划分成多个数组元素
       for (let i = 0, len = queryArray.length; i < len; i++) {
         const subquery = queryArray[i];
         const subqueryLen = subquery.length;
@@ -472,7 +472,6 @@ class PDFFindController {
         }
       }
       this._matchesWithLength[pageIndex] = matchesWithLength;
-      console.log('finder set _matchesWithLength',deepCopy(this._matchesWithLength[pageIndex]))
     }
     // Prepare arrays for storing the matches.
     if (!this.pageMatchesLength) {
@@ -494,6 +493,7 @@ class PDFFindController {
     let pageContent = this._pageContents[pageIndex];
     // console.log('pageContent',pageContent)
     let query_words = this.state.query;
+    // console.log('query_words',query_words)
     const pageDiffs = this._pageDiffs[pageIndex];
     // let query = this._query;
     const { caseSensitive, entireWord, phraseSearch,colorMap } = this._state;
@@ -571,14 +571,14 @@ class PDFFindController {
           .then(
             textContent => {
               // console.log('textContent',textContent.items)
-              //每一行文本
+              //textContent:每一页的文本
+              //textContent.items:每一行文本
               const textItems = textContent.items;
               const strBuf = [];
 
               for (let j = 0, jj = textItems.length; j < jj; j++) {
                 strBuf.push(textItems[j].str);
               }
-
               // Store the normalized page content (text items) as one string.
               [this._pageContents[i], this._pageDiffs[i]] = normalize(strBuf.join("")) //test
               // [this._pageContents[i], this._pageDiffs[i]] = strBuf.join("")

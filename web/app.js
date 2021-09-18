@@ -521,17 +521,6 @@ const PDFViewerApplication = {
       useOnlyCssZoom: AppOptions.get("useOnlyCssZoom"),
       maxCanvasPixels: AppOptions.get("maxCanvasPixels"),
     });
-    // eventBus.on("pagesinit", function () {
-    //   console.log('pagesinit')
-    //   // We can use pdfViewer now, e.g. let's change default scale.
-    //   pdfViewer.currentScaleValue = "page-width";
-    
-    //   // We can try searching for things.
-    //   if (PDFJSDev.test("MOZCENTRAL || CHROME")) {
-    //     let SEARCH_FOR = ['12','34']
-    //     findController.executeCommand("find", { query: SEARCH_FOR });
-    //   }
-    // });
     pdfRenderingQueue.setViewer(this.pdfViewer);
     pdfLinkService.setViewer(this.pdfViewer);
     pdfScriptingManager.setViewer(this.pdfViewer);
@@ -553,21 +542,6 @@ const PDFViewerApplication = {
 
     if (!this.supportsIntegratedFind) {
       this.findBar = new PDFFindBar(appConfig.findBar, eventBus, this.l10n);
-      // localStorage.removeItem('keywordForPDF')
-      // localStorage.setItem("keywordForPDF",JSON.stringify(['目标节点','回溯','冒泡阶段','触发']))
-      const keyword = JSON.parse(localStorage.getItem("keywordForPDF"))
-      // 获取value值
-      const highLightStr = appConfig.findBar.findField.value;
-      const highLightWords = highLightStr.split(",");
-      // let highLightWords = ['相关事务', 'Languages', 'for', 'Compilers', 'world', 'hello','进一步','公务用','管理职责','进行清洁工作'];
-      
-      let colorMap = []
-      let len = keyword.length
-      let cols = new Colors(len).rgbArray()
-      for(let i =0;i<keyword.length;i++){
-        colorMap.push(cols[i].rgb)
-      }
-      wordHighLight(keyword,colorMap)
     }
     this.pdfDocumentProperties = new PDFDocumentProperties(
       appConfig.documentProperties,
@@ -935,7 +909,6 @@ const PDFViewerApplication = {
         parameters[key] = args[key];
       }
     }
-    // console.log('可以在这里设置参数',parameters)
 
     const loadingTask = getDocument(parameters);
     this.pdfLoadingTask = loadingTask;
@@ -1195,7 +1168,6 @@ const PDFViewerApplication = {
 
   load(pdfDocument) {
     this.pdfDocument = pdfDocument;
-
     pdfDocument.getDownloadInfo().then(({ length }) => {
       this._contentLength = length; // Ensure that the correct length is used.
       this.downloadComplete = true;
@@ -1928,7 +1900,7 @@ const PDFViewerApplication = {
     eventBus._on("switchspreadmode", webViewerSwitchSpreadMode);
     eventBus._on("spreadmodechanged", webViewerSpreadModeChanged);
     eventBus._on("documentproperties", webViewerDocumentProperties);
-    eventBus._on("find", webViewerFind);
+    eventBus._on("find", wordHighLight);
     eventBus._on("findfromurlhash", webViewerFindFromUrlHash);
     eventBus._on("updatefindmatchescount", webViewerUpdateFindMatchesCount);
     eventBus._on("updatefindcontrolstate", webViewerUpdateFindControlState);
@@ -2024,8 +1996,8 @@ const PDFViewerApplication = {
     eventBus._off("switchspreadmode", webViewerSwitchSpreadMode);
     eventBus._off("spreadmodechanged", webViewerSpreadModeChanged);
     eventBus._off("documentproperties", webViewerDocumentProperties);
-    eventBus._off("find", webViewerFind);
-    eventBus._off("findfromurlhash", webViewerFindFromUrlHash);
+    eventBus._off("find", wordHighLight);
+    eventBus._off("findfromurlhash", wordHighLightFromUrlHash);
     eventBus._off("updatefindmatchescount", webViewerUpdateFindMatchesCount);
     eventBus._off("updatefindcontrolstate", webViewerUpdateFindControlState);
 
@@ -2309,12 +2281,21 @@ function webViewerResetPermissions() {
   // Currently only the "copy"-permission is supported.
   appConfig.viewerContainer.classList.remove(ENABLE_PERMISSIONS_CLASS);
 }
-function wordHighLight(hightLightWords,colorMap) {
+function wordHighLight() {
+  let qMap = document.getElementById('findInput').getAttribute('data-qMap')
+  let words = qMap.split(',')
+  let colorMap = []
+  let len = words.length
+  console.log('words',words)
+  let cols = new Colors(len).rgbArray()
+  for(let i =0;i<words.length;i++){
+    colorMap.push(cols[i].rgb)
+  }
   let evt = {
     // source: PDFFindBar, // PDFFindBar的实例，不确定是干嘛用的？
     type: '',  // 这里默认应该是空的
     // 这里能默认跳转到query的位置，刚好能满足要求
-    query: hightLightWords, // 高亮的关键词
+    query: words, // 高亮的关键词
     phraseSearch: false, // 支持整段文字匹配,如果时多个词的匹配只能是false
     caseSensitive: false, // 默认为false,搜索时忽略大小写
     highlightAll: true, // 设为true即关键词全部高亮
@@ -2739,6 +2720,7 @@ function webViewerDocumentProperties() {
 }
 
 function webViewerFind(evt) {
+  let qMap = document.getElementById('findInput').getAttribute('data-qMap')
   PDFViewerApplication.findController.executeCommand("find" + evt.type, {
     query: evt.query,
     phraseSearch: evt.phraseSearch,
@@ -2746,6 +2728,7 @@ function webViewerFind(evt) {
     entireWord: evt.entireWord,
     highlightAll: evt.highlightAll,
     findPrevious: evt.findPrevious,
+    qMap: qMap,
   });
 }
 

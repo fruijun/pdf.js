@@ -770,6 +770,7 @@ class EventBus {
   }
 
   dispatch(eventName) {
+    // console.log('dispatch(eventName)',eventName)
     const eventListeners = this._listeners[eventName];
     if (!eventListeners || eventListeners.length === 0) {
       if (
@@ -783,6 +784,9 @@ class EventBus {
     }
     // Passing all arguments after the eventName to the listeners.
     const args = Array.prototype.slice.call(arguments, 1);
+    // if(eventName == 'find'){
+    //   console.log('find args',args,this._listeners[eventName])
+    // }
     let externalListeners;
     // Making copy of the listeners array in case if it will be modified
     // during dispatch.

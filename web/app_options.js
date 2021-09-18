@@ -71,7 +71,7 @@ const defaultOptions = {
   },
   defaultUrl: {
     /** @type {string} */
-    value: "browser.pdf",
+    value: "three.pdf",
     kind: OptionKind.VIEWER,
   },
   defaultZoomValue: {
