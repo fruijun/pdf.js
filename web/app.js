@@ -2286,7 +2286,6 @@ function wordHighLight() {
   let words = qMap.split(',')
   let colorMap = []
   let len = words.length
-  console.log('words',words)
   let cols = new Colors(len).rgbArray()
   for(let i =0;i<words.length;i++){
     colorMap.push(cols[i].rgb)

@@ -207,7 +207,6 @@ function getViewerConfiguration() {
 function webViewerLoad() {
   const config = getViewerConfiguration();
   if (typeof PDFJSDev === "undefined" || !PDFJSDev.test("PRODUCTION")) {
-  console.log('走这里')
     Promise.all([
       import("pdfjs-web/genericcom.js"),
       import("pdfjs-web/pdf_print_service.js"),

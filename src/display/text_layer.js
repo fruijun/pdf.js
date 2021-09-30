@@ -116,6 +116,9 @@ function getAscent(fontFamily, ctx) {
 }
 
 function appendText(task, geom, styles, ctx) {
+  // if(geom.str=='股东方出于公司治理的需要，实施的可能影响公司正常经营的'){
+  //   console.log('geom.str',geom.str)
+  // }
   // Initialize all used properties to keep the caches monomorphic.
   const textDiv = document.createElement("span");
   const textDivProperties = task._enhanceTextSelection
@@ -159,6 +162,7 @@ function appendText(task, geom, styles, ctx) {
   }
   // Setting the style properties individually, rather than all at once,
   // should be OK since the `textDiv` isn't appended to the document yet.
+  //这里设置了div的样式
   textDiv.style.left = `${left}px`;
   textDiv.style.top = `${top}px`;
   textDiv.style.fontSize = `${fontHeight}px`;
@@ -663,6 +667,9 @@ class TextLayerRenderTask {
         }
         continue;
       }
+      // if(items[i].str=='股东方出于公司治理的需要，实施的可能影响公司正常经营的'){
+      //   console.log('items[i].str',items[i])
+      // }
       this._textContentItemsStr.push(items[i].str);
       appendText(this, items[i], styleCache, this._layoutTextCtx);
     }
@@ -749,8 +756,17 @@ class TextLayerRenderTask {
             capability.resolve();
             return;
           }
-
           Object.assign(styleCache, value.styles);
+          // value.items.forEach(i => {
+          //   if(i.str == '股东方出于公司治理的需要，实施的可能影响公司正常经营的'){
+          //     console.log('股东方',i)
+          //     console.log('styleCache',styleCache)
+          //   }
+          //   if(i.str == '由公司'){
+          //     console.log('2页 由公司',i)
+          //     console.log('styleCache',styleCache)
+          //   }
+          // })
           this._processItems(value.items, styleCache);
           pump();
         }, capability.reject);

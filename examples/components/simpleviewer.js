@@ -40,7 +40,6 @@ const SEARCH_FOR = ["Languages","for","进一步加强"]; // try 'Mozilla';
 const SANDBOX_BUNDLE_SRC = "../../node_modules/pdfjs-dist/build/pdf.sandbox.js";
 
 const container = document.getElementById("viewerContainer");
-console.log('pdfjsViewer', pdfjsViewer)
 const eventBus = new pdfjsViewer.EventBus();
 
 // (Optionally) enable hyperlinks within PDF files. //启用pdf中的超链接
@@ -72,7 +71,6 @@ pdfLinkService.setViewer(pdfViewer);
 pdfScriptingManager.setViewer(pdfViewer);
 
 eventBus.on("pagesinit", function () {
-  console.log('pagesinit')
   // We can use pdfViewer now, e.g. let's change default scale.
   pdfViewer.currentScaleValue = "page-width";
 

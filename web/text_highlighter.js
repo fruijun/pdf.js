@@ -67,7 +67,6 @@ class TextHighlighter {
     this.enabled = true;
     if (!this._onUpdateTextLayerMatches) {
       this._onUpdateTextLayerMatches = evt => {
-        console.log('evt',evt)
         if (evt.pageIndex === this.pageIdx || evt.pageIndex === -1) {
           this._updateMatches();
         }
@@ -151,14 +150,12 @@ class TextHighlighter {
   }
 
   _renderMatches(matches) {
-    console.log('_renderMatches matches',matches)
     // Early exit if there is nothing to render.
     if (matches.length === 0) {
       return;
     }
     const { findController, pageIdx } = this;
     const { textContentItemsStr, textDivs } = this;
-    console.log('matches',matches)
     const isSelectedPage = pageIdx === findController.selected.pageIdx;
     const selectedMatchIdx = findController.selected.matchIdx;
     const highlightAll = findController.state.highlightAll;
@@ -175,7 +172,6 @@ class TextHighlighter {
     }
 
     function appendTextToDiv(divIdx, fromOffset, toOffset, className,color) {
-      console.log('appendTextToDiv color',color)
       let div = textDivs[divIdx];
       if (div.nodeType === Node.TEXT_NODE) {
         const span = document.createElement("span");
@@ -193,10 +189,10 @@ class TextHighlighter {
         const span = document.createElement("span");
         // span.className = `${className} appended`;
         span.className = `${className}`;
-        console.log('color',color)
+        // console.log('color',color)
         span.style.backgroundColor = color
         span.appendChild(node);
-        console.log('span',span)
+        // console.log('span',span)
         div.appendChild(span);
         return className.includes("selected") ? span.offsetLeft : 0;
       }
@@ -219,7 +215,7 @@ class TextHighlighter {
       const begin = match.begin;
       const xId = match.xId;
       const color = match.begin.color;
-      console.log('bcolor',color)
+      // console.log('bcolor',color)
       const end = match.end;
       const isSelected = isSelectedPage && i === selectedMatchIdx;
       const highlightSuffix = isSelected ? " selected" : "";
@@ -273,7 +269,6 @@ class TextHighlighter {
     }
 
     if (prevEnd) {
-      console.log('prevEnd',prevEnd)
       appendTextToDiv(prevEnd.divIdx, prevEnd.offset, infinity.offset,'',prevEnd.color);
     }
   }
@@ -285,7 +280,6 @@ class TextHighlighter {
     const { findController, matches, pageIdx } = this;
     const { textContentItemsStr, textDivs } = this;
     let clearedUntilDivIdx = -1;
-    console.log('=matches',matches)
 
     // Clear all current matches.
     for (let i = 0, ii = matches.length; i < ii; i++) {

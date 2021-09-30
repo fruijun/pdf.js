@@ -111,7 +111,6 @@ class TextLayerBuilder {
       () => {
         this.textLayerDiv.appendChild(textLayerFrag);
         this._finishRendering();
-        console.log('_finishRendering enable')
         this.highlighter?.enable();
       },
       function (reason) {
