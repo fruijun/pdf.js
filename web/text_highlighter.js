@@ -190,7 +190,7 @@ class TextHighlighter {
         // span.className = `${className} appended`;
         span.className = `${className}`;
         // console.log('color',color)
-        span.style.backgroundColor = color
+        // span.style.backgroundColor = color
         span.appendChild(node);
         // console.log('span',span)
         div.appendChild(span);
@@ -251,7 +251,7 @@ class TextHighlighter {
         );
         for (let n0 = begin.divIdx + 1, n1 = end.divIdx; n0 < n1; n0++) {
           textDivs[n0].className = "highlight middle" + highlightSuffix;
-          textDivs[n0].style.backgroundColor = color
+          // textDivs[n0].style.backgroundColor = color
         }
         beginText(end, "highlight end" + highlightSuffix,color);
       }
