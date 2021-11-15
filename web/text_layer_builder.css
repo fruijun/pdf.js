@@ -37,7 +37,7 @@
 .textLayer .highlight {
   margin: -1px;
   padding: 1px;
-  background-color: rgba(64, 158, 255, 1);
+  background-color: red;
   border-radius: 4px;
 }
 
